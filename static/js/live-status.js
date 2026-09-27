@@ -2,6 +2,7 @@
    server is running, and if so offer a link to it.
 
    run-public.ps1 writes {"online": true, "url": "https://....trycloudflare.com"}
+   (or the permanent project.liveUrl from team.json)
    to live.json on the repository's `live` branch when it starts, and
    {"online": false} when it stops. Because a laptop can also just switch off,
    the page does not trust that file alone: it asks the server's /api/health
@@ -17,6 +18,9 @@
   if (!panel || !state) return;
 
   const TUNNEL_URL = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
+  // Permanent address (named Cloudflare tunnel) from team.json, if set.
+  const LIVE_URL = panel.dataset.liveUrl || '';
+  const allowed = (url) => TUNNEL_URL.test(url) || (LIVE_URL !== '' && url === LIVE_URL);
   const PING_TIMEOUT_MS = 6000;
 
   function show(kind, heading, body, url) {
@@ -61,8 +65,8 @@
       });
       if (!res.ok) return offline();
       const info = await res.json();
-      // Only ever link to a Cloudflare quick-tunnel address.
-      if (!info || !info.online || !TUNNEL_URL.test(info.url || '')) return offline();
+      // Only ever link to a Cloudflare quick-tunnel address or the configured one.
+      if (!info || !info.online || !allowed(info.url || '')) return offline();
       if (await ping(info.url)) {
         show('online', 'Live screening is online',
           'Upload a fundus photograph on the live server and get a graded, explained result in seconds.',
