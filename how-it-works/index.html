@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How it works · DRishti</title>
+<meta name="description" content="DRishti - diabetic retinopathy screening that a district can actually run.">
+<meta name="theme-color" content="#0f2a1f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230f2a1f'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23cfe3d8' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e6a53a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/DRishti-site/static/css/base.css">
+
+<link rel="stylesheet" href="/DRishti-site/static/css/retina.css">
+<link rel="stylesheet" href="/DRishti-site/static/css/how.css">
+
+</head>
+<body class="page-how">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <nav class="nav wrap" aria-label="Main">
+    <a class="brand" href="/DRishti-site/" aria-label="DRishti home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="15" fill="#16332a" stroke="rgba(255,255,255,0.18)"/>
+        <circle class="ring" cx="16" cy="16" r="10" fill="none" stroke="#cfe3d8" stroke-width="1.6" stroke-dasharray="46 17"/>
+        <circle cx="16" cy="16" r="4.5" fill="#e6a53a"/>
+      </svg>
+      DRishti
+    </a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/DRishti-site/" >Home</a></li>
+      <li><a href="/DRishti-site/scan" >Screen an eye</a></li>
+      <li><a href="/DRishti-site/how-it-works" aria-current="page">How it works</a></li>
+      <li><a href="/DRishti-site/about" >About</a></li>
+      <li><a class="nav-feature" href="/DRishti-site/simulink" ><span class="live-dot" aria-hidden="true"></span>Simulink model</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="page-head">
+  <div class="wrap">
+    <span class="eyebrow">How it works</span>
+    <h1>From one photograph to a referral decision.</h1>
+    <p class="lede">Six stages, each one you can open up and inspect. Scroll, and watch the eye
+       change as each stage does its job.</p>
+  </div>
+</section>
+
+<section class="story wrap" aria-label="The screening pipeline, step by step">
+  <div class="story-visual">
+    <div class="story-sticky">
+      <div class="retina-frame" id="storyRetina"></div>
+      <div class="stage-caption" aria-hidden="true">
+        <span class="stage-num" id="stageNum">01</span>
+        <span class="stage-name" id="stageName">Capture</span>
+      </div>
+      <ol class="progress" id="storyProgress" aria-hidden="true">
+        <li></li><li></li><li></li><li></li><li></li><li></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="story-steps">
+    <article class="story-step" data-stage="capture" data-name="Capture">
+      <span class="step-kicker">01 &middot; Capture</span>
+      <h2>A technician photographs both eyes.</h2>
+      <p>A non-mydriatic fundus camera at the screening camp takes one photograph per eye. No
+         specialist is needed at this point, only a trained operator.</p>
+      <ul class="facts">
+        <li><strong>About 4 min</strong> per patient, both eyes</li>
+        <li><strong>Up to 2 retakes</strong> if the quality gate says no</li>
+      </ul>
+    </article>
+
+    <article class="story-step" data-stage="quality" data-name="Quality gate">
+      <span class="step-kicker">02 &middot; Quality gate</span>
+      <h2>Can this photograph be graded at all?</h2>
+      <p>Before any grading, three checks run on the image. The field of view is found with a
+         circular Hough transform. Sharpness is the variance of the Laplacian of the green channel.
+         Exposure comes from the brightness histogram inside the retina.</p>
+      <div class="verdicts" aria-label="Possible outcomes">
+        <span class="v pass">Pass</span>
+        <span class="v enh">Enhance with CLAHE</span>
+        <span class="v rej">Reject &rarr; retake</span>
+      </div>
+      <p class="why">A rejected image never travels. That saves bandwidth, and it means a grade is
+         never guessed from a photo that cannot support one.</p>
+      <code class="src">assessImageQuality.m</code>
+    </article>
+
+    <article class="story-step" data-stage="segment" data-name="Segmentation">
+      <span class="step-kicker">03 &middot; Segmentation</span>
+      <h2>Finding the anatomy first.</h2>
+      <p>The optic disc is the brightest compact region. The fovea is the darkest area about
+         two and a half disc diameters to its side. Vessels come from 24 matched filters, at two widths and
+         twelve orientations, followed by hysteresis thresholding.</p>
+      <p class="why">Every threshold is a fraction of the retina&rsquo;s own radius, so the same
+         settings work across cameras and resolutions without retuning.</p>
+      <code class="src">segmentRetina.m</code>
+    </article>
+
+    <article class="story-step" data-stage="grade" data-name="Lesions">
+      <span class="step-kicker">04 &middot; Lesions</span>
+      <h2>Counting what damages the retina.</h2>
+      <ul class="lesion-list">
+        <li><span class="sw ma"></span><div><strong>Microaneurysms</strong> Tiny red dots, isolated with a top-hat transform.</div></li>
+        <li><span class="sw ex"></span><div><strong>Hard exudates</strong> Bright yellow deposits, found against a median-filtered background.</div></li>
+        <li><span class="sw hem"></span><div><strong>Haemorrhages</strong> Dark blots away from the vessels, kept only if their shape is blob-like.</div></li>
+      </ul>
+      <p class="why">Lesions are counted per quadrant around the optic disc, because the severe
+         grade depends on where they are, not only how many.</p>
+    </article>
+
+    <article class="story-step" data-stage="consensus" data-name="Two graders">
+      <span class="step-kicker">05 &middot; Two graders</span>
+      <h2>Two independent opinions, one decision.</h2>
+      <div class="graders">
+        <div class="grader">
+          <h3>Clinical rules</h3>
+          <p>Applies the ICDR scale directly to the lesion counts, including the 4-2-1 rule for
+             severe disease. Every grade lists the criteria that triggered it.</p>
+          <code class="src">gradeByRules.m</code>
+        </div>
+        <div class="grader">
+          <h3>Neural network</h3>
+          <p>EfficientNet-B0 fine-tuned on APTOS 2019. Its confidence is calibrated, and its
+             referral cut-off is chosen for at least 90% sensitivity.</p>
+          <code class="src">predictDRGrade.m</code>
+        </div>
+      </div>
+      <div class="consensus-rule">
+        <span><strong>Agree</strong> &rarr; the grade stands</span>
+        <span><strong>Disagree</strong> &rarr; a human reviews, and the case is referable if either grader says so</span>
+      </div>
+    </article>
+
+    <article class="story-step" data-stage="report" data-name="Report">
+      <span class="step-kicker">06 &middot; Report</span>
+      <h2>A result the clinic and the patient can read.</h2>
+      <p>The clinic gets the grade, the referral decision, a colour-coded lesion overlay and, when
+         the network ran, a Grad-CAM map of where it looked. The patient gets a PDF in plain
+         language.</p>
+      <p class="why">A language model writes the plain-language paragraphs and nothing else. The
+         grade is a fixed input it cannot change. Without a key or a network, a built-in paragraph
+         is used and the report still generates.</p>
+      <code class="src">report_generator.py</code>
+    </article>
+  </div>
+</section>
+
+<!-- ======================================================= resilience -->
+<section class="section resilience">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow reveal">Designed for real camps</span>
+      <h2 class="reveal" style="--delay:.06s">It degrades instead of failing.</h2>
+      <p class="lede reveal" style="--delay:.12s">Each missing piece removes one capability. The
+         screening keeps running.</p>
+    </div>
+
+    <div class="ladder">
+      <div class="rung reveal" style="--delay:.00s">
+        <span class="rung-if">No trained network</span>
+        <span class="rung-then">Rule-based grading and the lesion overlay still run. The report says which mode was used.</span>
+      </div>
+      <div class="rung reveal" style="--delay:.08s">
+        <span class="rung-if">No Image Processing Toolbox</span>
+        <span class="rung-then">A pure-MATLAB layer supplies every image function the pipeline needs, checked by 61 tests.</span>
+      </div>
+      <div class="rung reveal" style="--delay:.16s">
+        <span class="rung-if">No language-model key</span>
+        <span class="rung-then">The PDF uses a built-in, clinically neutral paragraph instead.</span>
+      </div>
+      <div class="rung reveal" style="--delay:.24s">
+        <span class="rung-if">No network at the camp</span>
+        <span class="rung-then">Images are stored and forwarded when the link returns.</span>
+      </div>
+    </div>
+
+    <div class="modes reveal">
+      <div class="mode">
+        <span class="mode-tag full">real_full</span>
+        <p>A trained network loads. Consensus grade, Grad-CAM, calibrated confidence and the lesion overlay.</p>
+      </div>
+      <div class="mode">
+        <span class="mode-tag rules">real_no_cnn</span>
+        <p>No usable network. Rule-based ICDR grade and the lesion overlay. No Grad-CAM, no confidence score.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= next -->
+<section class="section section-dark next-up">
+  <div class="wrap next-grid">
+    <div>
+      <span class="eyebrow reveal" style="color:var(--amber-2)">The bigger picture</span>
+      <h2 class="reveal" style="--delay:.06s">One eye is solved. What about a hundred thousand?</h2>
+      <p class="lede reveal" style="--delay:.12s">A screening programme is a chain of queues, and
+         it breaks at the narrowest one. Our Simulink model finds it.</p>
+    </div>
+    <div class="next-actions reveal" style="--delay:.18s">
+      <a class="btn btn-feature" href="/DRishti-site/simulink">Open the Simulink model <span class="feature-tag">Major feature</span></a>
+      <a class="btn btn-ghost" href="/DRishti-site/scan">Try a screening</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>DRishti</h4>
+        <p>Diabetic retinopathy screening that a district can actually run. Two independent graders,
+           an honest capacity model, and a report a patient can read.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="/DRishti-site/scan">Screen an eye</a></li>
+          <li><a href="/DRishti-site/how-it-works">How it works</a></li>
+          <li><a href="/DRishti-site/simulink">Simulink capacity model</a></li>
+          <li><a href="/DRishti-site/about">About the team</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          
+          
+          <li><a href="https://shaurya-web548.github.io/DRishti-site/" rel="noopener">Project website</a></li>
+          <li>Smart India Hackathon · SIH26038</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">&copy; 2026 DRishti. A research and screening tool, not a medical device.
+       It does not replace examination by a qualified ophthalmologist.</p>
+  </div>
+</footer>
+
+<script src="/DRishti-site/static/js/motion.js"></script>
+
+<script src="/DRishti-site/static/js/retina.js"></script>
+<script src="/DRishti-site/static/js/how.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulink capacity model · DRishti</title>
+<meta name="description" content="DRishti - diabetic retinopathy screening that a district can actually run.">
+<meta name="theme-color" content="#0f2a1f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230f2a1f'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23cfe3d8' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e6a53a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/DRishti-site/static/css/base.css">
+
+<link rel="stylesheet" href="/DRishti-site/static/css/simulink.css">
+
+</head>
+<body class="page-simulink">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <nav class="nav wrap" aria-label="Main">
+    <a class="brand" href="/DRishti-site/" aria-label="DRishti home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="15" fill="#16332a" stroke="rgba(255,255,255,0.18)"/>
+        <circle class="ring" cx="16" cy="16" r="10" fill="none" stroke="#cfe3d8" stroke-width="1.6" stroke-dasharray="46 17"/>
+        <circle cx="16" cy="16" r="4.5" fill="#e6a53a"/>
+      </svg>
+      DRishti
+    </a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/DRishti-site/" >Home</a></li>
+      <li><a href="/DRishti-site/scan" >Screen an eye</a></li>
+      <li><a href="/DRishti-site/how-it-works" >How it works</a></li>
+      <li><a href="/DRishti-site/about" >About</a></li>
+      <li><a class="nav-feature" href="/DRishti-site/simulink" aria-current="page"><span class="live-dot" aria-hidden="true"></span>Simulink model</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="page-head sim-head">
+  <div class="wrap">
+    <span class="feature-tag">Major feature</span>
+    <h1>Where does a district screening programme break?</h1>
+    <p class="lede">A year of screening, simulated from our MATLAB models, right here in your browser. Change the resources and the model
+       finds the queue that saturates first. The flow model runs from our Simulink block diagram,
+       and a discrete-event simulation of every patient checks it.</p>
+    <p class="engine" id="engineBadge" aria-live="polite">
+      <span class="engine-dot"></span><span id="engineText">Preparing the simulation&hellip;</span>
+    </p>
+  </div>
+</section>
+
+<section class="sim wrap">
+  <!-- ============================================================ controls -->
+  <form class="controls" id="simForm" novalidate aria-label="Scenario parameters">
+    <div class="presets" role="group" aria-label="Scenario presets">
+      <button type="button" class="preset active" data-preset="baseline">Baseline</button>
+      <button type="button" class="preset" data-preset="growth">150k patients</button>
+      <button type="button" class="preset" data-preset="minimum">Minimum feasible</button>
+      <button type="button" class="preset" data-preset="slow">Slow compute</button>
+    </div>
+
+    <fieldset>
+      <legend>Demand</legend>
+      <div class="slider" data-key="annualPatients" data-fmt="int">
+        <label for="s-annualPatients">Patients per year</label>
+        <output id="o-annualPatients"></output>
+        <input type="range" id="s-annualPatients" min="10000" max="400000" step="5000">
+      </div>
+      <div class="slider" data-key="sites" data-fmt="int">
+        <label for="s-sites">Screening camps per day</label>
+        <output id="o-sites"></output>
+        <input type="range" id="s-sites" min="1" max="30" step="1">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Compute</legend>
+      <div class="slider" data-key="workers" data-fmt="int">
+        <label for="s-workers">MATLAB workers</label>
+        <output id="o-workers"></output>
+        <input type="range" id="s-workers" min="1" max="16" step="1">
+      </div>
+      <div class="slider" data-key="procMeanSec" data-fmt="sec">
+        <label for="s-procMeanSec">Seconds per image</label>
+        <output id="o-procMeanSec"></output>
+        <input type="range" id="s-procMeanSec" min="2" max="180" step="1">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>People</legend>
+      <div class="slider" data-key="graderFTE" data-fmt="fte">
+        <label for="s-graderFTE">Graders (full-time)</label>
+        <output id="o-graderFTE"></output>
+        <input type="range" id="s-graderFTE" min="0.5" max="10" step="0.5">
+      </div>
+      <div class="slider" data-key="ophthFTE" data-fmt="fte">
+        <label for="s-ophthFTE">Ophthalmologists (full-time)</label>
+        <output id="o-ophthFTE"></output>
+        <input type="range" id="s-ophthFTE" min="0.25" max="6" step="0.25">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Network and clinic</legend>
+      <div class="slider" data-key="uplinkMbps" data-fmt="mbps" data-steps="0.1,0.25,0.5,1,2,4,8,16,32,50">
+        <label for="s-uplinkMbps">Uplink per camp</label>
+        <output id="o-uplinkMbps"></output>
+        <input type="range" id="s-uplinkMbps" min="0" max="9" step="1">
+      </div>
+      <div class="slider" data-key="pReferable" data-fmt="pct">
+        <label for="s-pReferable">Referable rate</label>
+        <output id="o-pReferable"></output>
+        <input type="range" id="s-pReferable" min="0.01" max="0.4" step="0.01">
+      </div>
+      <div class="slider" data-key="pDisagree" data-fmt="pct">
+        <label for="s-pDisagree">Grader disagreement rate</label>
+        <output id="o-pDisagree"></output>
+        <input type="range" id="s-pDisagree" min="0" max="0.6" step="0.01">
+      </div>
+    </fieldset>
+
+    <button type="submit" class="btn btn-feature run-btn" id="runBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" fill="currentColor"/></svg>
+      Run simulation
+    </button>
+    <p class="controls-note">Results update by themselves a moment after you move a slider.</p>
+  </form>
+
+  <!-- ============================================================ results -->
+  <div class="results" id="results" aria-live="polite">
+    <div class="busy" id="busy" hidden>
+      <div class="busy-ring" aria-hidden="true"></div>
+      <p id="busyText">Simulating 250 working days&hellip;</p>
+    </div>
+
+    <div class="error-box hidden" id="simError" role="alert"></div>
+
+    <div class="verdict" id="verdict">
+      <span class="verdict-kicker">Bottleneck</span>
+      <h2 id="verdictTitle">&nbsp;</h2>
+      <p id="verdictText">&nbsp;</p>
+    </div>
+
+    <figure class="diagram">
+      <figcaption>
+        <strong>Simulink flow model</strong>
+        <span>Each block is a backlog integrator. Colour shows how busy the resource is.</span>
+      </figcaption>
+      <svg id="diagram" viewBox="0 0 900 188" role="img" aria-label="Block diagram of the five pipeline stages with their utilisation"></svg>
+    </figure>
+
+    <section class="block" aria-labelledby="utilTitle">
+      <div class="block-head">
+        <h3 id="utilTitle">Resource utilisation</h3>
+        <span class="block-note">Discrete-event simulation of every patient</span>
+      </div>
+      <div class="bars" id="bars"></div>
+      <p class="bars-key"><span class="k-line"></span>85% planning limit &nbsp; <span class="k-line red"></span>100% &mdash; the queue never drains</p>
+    </section>
+
+    <section class="kpis" id="kpis" aria-label="Programme outcomes"></section>
+
+    <section class="block" aria-labelledby="dayTitle">
+      <div class="block-head">
+        <h3 id="dayTitle">Three typical days</h3>
+        <div class="toggle" role="group" aria-label="Series to show">
+          <button type="button" class="on" data-series="flow">Throughput</button>
+          <button type="button" data-series="backlog">Backlog</button>
+        </div>
+      </div>
+      <p class="block-note" id="dayNote">Every camp captures inside the same six-hour session, so work
+         arrives in daily bursts. Watch which stages drain before the next day starts.</p>
+      <svg class="chart" id="dayChart" viewBox="0 0 860 280" role="img" aria-label="Throughput or backlog of each stage over three days"></svg>
+      <ul class="legend" id="dayLegend"></ul>
+    </section>
+
+    <section class="block" aria-labelledby="yearTitle">
+      <div class="block-head">
+        <h3 id="yearTitle">Specialist backlog across the year</h3>
+      </div>
+      <p class="block-note">Patients waiting for an ophthalmologist at the end of each working day.
+         A line that keeps rising means the clinic can never catch up.</p>
+      <svg class="chart" id="yearChart" viewBox="0 0 860 240" role="img" aria-label="Referral backlog at the end of each day of the year"></svg>
+    </section>
+
+    <section class="block" aria-labelledby="valTitle">
+      <div class="block-head">
+        <h3 id="valTitle">Two models, one answer</h3>
+        <span class="block-note">Annual totals, flow model versus discrete-event reference</span>
+      </div>
+      <div class="table-wrap">
+        <table class="val-table">
+          <thead><tr><th scope="col">Quantity</th><th scope="col">Flow model</th><th scope="col">Discrete-event</th><th scope="col">Difference</th></tr></thead>
+          <tbody id="valBody"></tbody>
+        </table>
+      </div>
+      <p class="block-note">The flow model is deterministic and serves every arrival, while the
+         discrete-event model turns away patients a session cannot seat. A gap of a few percent is
+         expected; a large one would mean a parameter was mistranslated between the two.</p>
+    </section>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>DRishti</h4>
+        <p>Diabetic retinopathy screening that a district can actually run. Two independent graders,
+           an honest capacity model, and a report a patient can read.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="/DRishti-site/scan">Screen an eye</a></li>
+          <li><a href="/DRishti-site/how-it-works">How it works</a></li>
+          <li><a href="/DRishti-site/simulink">Simulink capacity model</a></li>
+          <li><a href="/DRishti-site/about">About the team</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          
+          
+          <li><a href="https://shaurya-web548.github.io/DRishti-site/" rel="noopener">Project website</a></li>
+          <li>Smart India Hackathon · SIH26038</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">&copy; 2026 DRishti. A research and screening tool, not a medical device.
+       It does not replace examination by a qualified ophthalmologist.</p>
+  </div>
+</footer>
+
+<script src="/DRishti-site/static/js/motion.js"></script>
+
+
+<script>window.DRISHTI_STATIC = true;</script>
+<script src="/DRishti-site/static/js/capacity-engine.js"></script>
+
+<script src="/DRishti-site/static/js/simulink.js"></script>
+
+</body>
+</html>
